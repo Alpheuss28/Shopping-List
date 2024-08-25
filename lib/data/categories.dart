@@ -44,4 +44,3 @@ const categories = {
     Color.fromARGB(255, 0, 225, 255),
   ),
 };
-

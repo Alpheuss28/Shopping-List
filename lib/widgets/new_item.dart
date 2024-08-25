@@ -21,24 +21,26 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
   void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       final url = Uri.https(
-        "flutter-prep-6439d-default-rtdb.firebaseio.com",
-        "shopping-list.json",
-      );
+          'flutter-prep-6439d-default-rtdb.firebaseio.com', 'shopping-list.json');
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: json.encode(
           {
-            "name": _enteredName,
-            "quantity": _enteredQuantity,
-            "category": _selectedCategory.title,
+            'name': _enteredName,
+            'quantity': _enteredQuantity,
+            'category': _selectedCategory.title,
           },
         ),
       );
@@ -51,7 +53,7 @@ class _NewItemState extends State<NewItem> {
 
       Navigator.of(context).pop(
         GroceryItem(
-          id: resData["name"],
+          id: resData['name'],
           name: _enteredName,
           quantity: _enteredQuantity,
           category: _selectedCategory,
@@ -64,7 +66,7 @@ class _NewItemState extends State<NewItem> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add new item'),
+        title: const Text('Add a new item'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(12),
@@ -75,28 +77,31 @@ class _NewItemState extends State<NewItem> {
               TextFormField(
                 maxLength: 50,
                 decoration: const InputDecoration(
-                  label: Text("Name"),
+                  label: Text('Name'),
                 ),
                 validator: (value) {
                   if (value == null ||
                       value.isEmpty ||
                       value.trim().length <= 1 ||
                       value.trim().length > 50) {
-                    return 'Please enter some text';
+                    return 'Must be between 1 and 50 characters.';
                   }
                   return null;
                 },
                 onSaved: (value) {
+                  // if (value == null) {
+                  //   return;
+                  // }
                   _enteredName = value!;
                 },
-              ),
+              ), // instead of TextField()
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: TextFormField(
                       decoration: const InputDecoration(
-                        label: Text("Quantity"),
+                        label: Text('Quantity'),
                       ),
                       keyboardType: TextInputType.number,
                       initialValue: _enteredQuantity.toString(),
@@ -105,7 +110,7 @@ class _NewItemState extends State<NewItem> {
                             value.isEmpty ||
                             int.tryParse(value) == null ||
                             int.tryParse(value)! <= 0) {
-                          return 'Please enter a valid quantity';
+                          return 'Must be a valid, positive number.';
                         }
                         return null;
                       },
@@ -149,15 +154,23 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: const Text('Reset'),
                   ),
                   ElevatedButton(
-                    onPressed: _saveItem,
-                    child: const Text('Save'),
-                  ),
+                    onPressed: _isSending ? null : _saveItem,
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Text('Add Item'),
+                  )
                 ],
               ),
             ],
